@@ -6,42 +6,41 @@
 <title>StudyTimer</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nunito:wght@300;600;800&display=swap">
 <style>
-/* 링 타이머(가운데에서 살짝 왼쪽) | 블루 오늘 카드 / 아래에 잔디 */
+/* 링 타이머 | (오늘 한 줄 카드 + 시간표/ToDo 카드) / 아래에 잔디 — 화이트 모드 고정 */
 :root {
   --bg: #f4f4f3; --card: #ffffff; --fg: #222222; --muted: #8c8c8a; --line: #e2e2df; --empty: #ebebe8;
-  --blue: #34548a; --on-blue: #f3f6fb; --b1: #c9d5ea; --b2: #93abd3; --b3: #5d7fb8; --b4: #34548a;
+  --blue: #34548a; --on-blue: #f3f6fb; --b1: #dbe3f0; --b2: #93abd3; --b3: #5d7fb8; --b4: #34548a;
   --shade: rgba(20, 20, 20, .35);
   --font: "Gowun Dodum", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --num: "Nunito", "Gowun Dodum", system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141414; --card: #1d1d1d; --fg: #ececea; --muted: #7e7e7c; --line: #2c2c2b; --empty: #262625;
-    --blue: #7f9ed6; --on-blue: #10182a; --b1: #26324a; --b2: #3b5384; --b3: #5c7ebf; --b4: #8eabe0;
-    --shade: rgba(0, 0, 0, .55);
-    color-scheme: dark;
-  }
+  color-scheme: light;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; }
 [hidden] { display: none !important; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--b2); outline-offset: 2px; }
 
-.wrap { max-width: 800px; margin: 0 auto; padding: 48px 16px; display: flex; flex-direction: column; gap: 20px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 44px 16px; display: flex; flex-direction: column; gap: 20px; }
 .bar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .logo { font-family: var(--num); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
 .logo span { color: var(--blue); }
 .bar .date { color: var(--muted); font-size: 13px; }
 
-.top { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; }
+.top { display: grid; grid-template-columns: 1fr 1.15fr; gap: 20px; }
+.side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 28px; min-width: 0; }
+.label { font-size: 13px; letter-spacing: .04em; color: var(--muted); }
 
-.timer { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.modes { display: flex; background: var(--empty); border-radius: 999px; padding: 4px; }
-.modes button { font: inherit; font-size: 13px; border: none; background: none; color: var(--muted); padding: 7px 18px; border-radius: 999px; cursor: pointer; }
-.modes button.on { background: var(--card); color: var(--fg); }
-.modes button:disabled { cursor: default; }
+.pill { display: flex; background: var(--empty); border-radius: 999px; padding: 4px; }
+.pill button { font-size: 13px; border: none; background: none; color: var(--muted); padding: 6px 16px; border-radius: 999px; }
+.pill button.on { background: var(--card); color: var(--fg); }
+.pill button:disabled { cursor: default; }
 
-.ring { position: relative; width: min(270px, 100%); aspect-ratio: 1; }
+/* 타이머 */
+.timer { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.ring { position: relative; width: min(260px, 100%); aspect-ratio: 1; }
 .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .ring circle { fill: none; stroke-width: 6; }
 .ring .track { stroke: var(--empty); }
@@ -52,30 +51,57 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
 .running .dot { background: var(--blue); animation: breathe 1.6s ease-in-out infinite; }
 .running .state { color: var(--blue); }
-.clock { font-family: var(--num); font-weight: 300; font-size: clamp(40px, 12vw, 50px); font-variant-numeric: tabular-nums; line-height: 1; }
-
+.clock { font-family: var(--num); font-weight: 300; font-size: clamp(40px, 12vw, 48px); font-variant-numeric: tabular-nums; line-height: 1; }
 .pomo-set { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 13px; }
 .pomo-set label { display: flex; align-items: center; gap: 6px; }
-.pomo-set select { font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px; }
-
-.toggle {
-  font: inherit; font-size: 15px; cursor: pointer; border: none; border-radius: 999px;
-  padding: 12px 36px; background: var(--blue); color: var(--on-blue); transition: transform .12s;
-}
-.toggle:active { transform: scale(.96); }
-.toggle:focus-visible, .modes button:focus-visible { outline: 3px solid var(--b2); outline-offset: 3px; }
-.running .toggle { background: var(--fg); color: var(--card); }
+select, input[type="text"], input[type="time"] { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 5px 8px; min-width: 0; }
+.main-btn { font-size: 15px; border: none; border-radius: 999px; padding: 12px 36px; background: var(--blue); color: var(--on-blue); transition: transform .12s; }
+.main-btn:active { transform: scale(.96); }
+.running .main-btn { background: var(--fg); color: var(--card); }
 .hint { color: var(--muted); font-size: 12px; text-align: center; }
 
-.today { background: var(--blue); color: var(--on-blue); border-color: var(--blue); display: flex; flex-direction: column; justify-content: space-between; gap: 28px; }
-.label { font-size: 13px; letter-spacing: .04em; opacity: .75; }
-.big { font-family: var(--num); font-weight: 600; font-size: 40px; font-variant-numeric: tabular-nums; margin-top: 8px; line-height: 1.1; }
-.big small { font-family: var(--font); font-size: 15px; font-weight: 400; opacity: .75; margin-left: 2px; }
-.today .row { display: flex; gap: 24px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--on-blue) 25%, transparent); }
-.mid { font-family: var(--num); font-weight: 600; font-size: 20px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+/* 오늘 한 줄 카드 */
+.today { background: var(--blue); color: var(--on-blue); border-color: var(--blue); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
+.today .label { color: inherit; opacity: .75; font-size: 12px; }
+.big { font-family: var(--num); font-weight: 600; font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1.15; margin-top: 2px; }
+.big small { font-family: var(--font); font-size: 13px; font-weight: 400; opacity: .75; margin-left: 2px; }
+.stats { display: flex; gap: 18px; }
+.mid { font-family: var(--num); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; margin-top: 2px; }
 
+/* 시간표 / ToDo 카드 */
+.plan { padding: 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.plan-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.plus { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 18px; line-height: 1; color: var(--blue); }
+.plus:hover { background: var(--b1); }
+
+.tt-scroll { overflow: auto; max-height: 300px; border: 1px solid var(--line); border-radius: 14px; }
+.tt { display: grid; grid-template-columns: 34px repeat(7, minmax(44px, 1fr)); min-width: 360px; font-size: 11px; }
+.tt .dayname { position: sticky; top: 0; z-index: 2; background: var(--card); text-align: center; padding: 6px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
+.tt .dayname.is-today { color: var(--blue); font-weight: 700; }
+.tt .hours { position: relative; color: var(--muted); }
+.tt .hours span { position: absolute; right: 6px; transform: translateY(-50%); font-family: var(--num); font-size: 10px; }
+.tt .col { position: relative; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, transparent 0 calc(var(--h) - 1px), var(--empty) calc(var(--h) - 1px) var(--h)); }
+.tt .col.is-today { background-color: #f7f9fc; }
+.blk { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 3px 4px; overflow: hidden; text-align: left; border: none; font-size: 11px; line-height: 1.25; background: var(--b1); color: var(--blue); }
+.blk.todo { background: var(--card); border: 1.5px dashed var(--b3); color: var(--fg); }
+.blk.done { opacity: .45; text-decoration: line-through; }
+.tt-empty { color: var(--muted); font-size: 12px; text-align: center; }
+
+.todo-add { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.todo-add .when { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
+.small-btn { border: none; border-radius: 10px; padding: 6px 14px; background: var(--blue); color: var(--on-blue); font-size: 13px; }
+.ghost-btn { border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; background: var(--card); font-size: 13px; }
+.danger { color: #a33a3a; }
+.todos { display: flex; flex-direction: column; gap: 2px; max-height: 230px; overflow-y: auto; }
+.todo { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--empty); }
+.todo input { width: 16px; height: 16px; accent-color: var(--blue); }
+.todo .txt { min-width: 0; overflow-wrap: anywhere; }
+.todo.done .txt { color: var(--muted); text-decoration: line-through; }
+.todo .meta { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+.todo .x { border: none; background: none; color: var(--muted); font-size: 16px; padding: 2px 6px; }
+
+/* 잔디 */
 .grass-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-.grass-head .label { color: var(--muted); opacity: 1; }
 .legend { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; }
 .scroll { overflow-x: auto; padding-bottom: 4px; }
 .grass { display: grid; grid-template-rows: repeat(7, 15px); grid-auto-flow: column; grid-auto-columns: 15px; gap: 5px; width: max-content; margin: 0 auto; }
@@ -88,17 +114,23 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
 .sq.future { visibility: hidden; }
 .legend .sq { width: 12px; height: 12px; }
 
-.note { background: var(--b1); color: var(--fg); border-radius: 14px; padding: 12px 16px; font-size: 13px; }
+.note { background: var(--b1); border-radius: 14px; padding: 12px 16px; font-size: 13px; }
 
-.modal { position: fixed; inset: 0; background: var(--shade); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.modal .card { width: min(340px, 100%); text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; animation: pop .25s ease-out; }
-.modal b { font-size: 19px; font-weight: 400; }
+/* 팝업 */
+.modal { position: fixed; inset: 0; background: var(--shade); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.modal .card { width: min(340px, 100%); display: flex; flex-direction: column; gap: 12px; animation: pop .25s ease-out; }
+.modal b { font-size: 18px; font-weight: 400; }
 .modal p { margin: 0; color: var(--muted); }
+.center { text-align: center; align-items: center; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.err { color: #a33a3a; font-size: 12px; min-height: 1em; margin: 0; }
 
 @keyframes breathe { 50% { opacity: .3; transform: scale(.8); } }
 @keyframes pop { from { transform: scale(.92); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .running .dot, .modal .card { animation: none; } .ring .prog { transition: none; } }
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .wrap { padding-block: 28px; }
   .top { grid-template-columns: 1fr; }
 }
@@ -112,7 +144,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
 
   <div class="top">
     <div class="card timer" id="timer">
-      <div class="modes">
+      <div class="pill">
         <button type="button" id="modeWatch" class="on">스톱워치</button>
         <button type="button" id="modePomo">뽀모도로</button>
       </div>
@@ -134,19 +166,50 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
           <select id="breakMin"><option selected>5</option><option>10</option><option>15</option></select>분
         </label>
       </div>
-      <button class="toggle" id="toggle" type="button">시작하기</button>
+      <button class="main-btn" id="toggle" type="button">시작하기</button>
       <div class="hint" id="hint"></div>
     </div>
 
-    <div class="card today">
-      <div>
-        <div class="label">오늘 공부한 시간</div>
-        <div class="big" id="todayTotal">0<small>분</small></div>
+    <div class="side">
+      <div class="card today">
+        <div>
+          <div class="label">오늘 공부한 시간</div>
+          <div class="big" id="todayTotal">0<small>분</small></div>
+        </div>
+        <div class="stats">
+          <div><div class="label">연속</div><div class="mid" id="streak">0일</div></div>
+          <div><div class="label">이번 달</div><div class="mid" id="month">0일</div></div>
+          <div><div class="label">뽀모도로</div><div class="mid" id="pomoToday">0회</div></div>
+        </div>
       </div>
-      <div class="row">
-        <div><div class="label">연속</div><div class="mid" id="streak">0일</div></div>
-        <div><div class="label">이번 달</div><div class="mid" id="month">0일</div></div>
-        <div><div class="label">뽀모도로</div><div class="mid" id="pomoToday">0회</div></div>
+
+      <div class="card plan">
+        <div class="plan-head">
+          <div class="pill">
+            <button type="button" id="tabTT" class="on">시간표</button>
+            <button type="button" id="tabTodo">ToDoList</button>
+          </div>
+          <button class="plus" id="addClass" type="button" title="고정 시간표 추가">+</button>
+        </div>
+
+        <div id="ttPane">
+          <div class="tt-scroll"><div class="tt" id="tt"></div></div>
+        </div>
+
+        <div id="todoPane" hidden>
+          <form class="todo-add" id="todoForm">
+            <input type="text" id="todoText" placeholder="할 일을 적어요" autocomplete="off">
+            <button class="small-btn" type="submit">추가</button>
+            <div class="when">
+              <select id="todoDay"><option value="">시간표에 안 넣기</option></select>
+              <input type="time" id="todoStart" step="600" disabled>
+              ~
+              <input type="time" id="todoEnd" step="600" disabled>
+            </div>
+          </form>
+          <div class="hint" style="text-align:left;margin:8px 0 4px">ToDo는 만든 지 일주일이 지나면 자동으로 사라져요</div>
+          <div class="todos" id="todos"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -160,21 +223,57 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--fo
   </div>
 </div>
 
-<div class="modal" id="modal" hidden>
+<div class="modal" id="alarmModal" hidden>
+  <div class="card center">
+    <b id="alarmTitle"></b>
+    <p id="alarmText"></p>
+    <button class="main-btn" id="alarmOk" type="button">확인</button>
+  </div>
+</div>
+
+<div class="modal" id="classModal" hidden>
+  <form class="card" id="classForm">
+    <b>고정 시간표 추가</b>
+    <label class="field" for="className">이름
+      <input type="text" id="className" placeholder="예: 자료구조" autocomplete="off">
+    </label>
+    <div class="field-row">
+      <label class="field" for="classDay">요일<select id="classDay"></select></label>
+      <label class="field" for="classStart">시작<input type="time" id="classStart" step="600" value="09:00"></label>
+      <label class="field" for="classEnd">끝<input type="time" id="classEnd" step="600" value="10:30"></label>
+    </div>
+    <p class="err" id="classErr"></p>
+    <div class="btns">
+      <button class="ghost-btn" type="button" id="classCancel">취소</button>
+      <button class="small-btn" type="submit">추가</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal" id="blockModal" hidden>
   <div class="card">
-    <b id="modalTitle"></b>
-    <p id="modalText"></p>
-    <button class="toggle" id="modalOk" type="button">확인</button>
+    <b id="blockTitle"></b>
+    <p id="blockText"></p>
+    <div class="btns">
+      <button class="ghost-btn" type="button" id="blockClose">닫기</button>
+      <button class="ghost-btn danger" type="button" id="blockDelete">삭제</button>
+    </div>
   </div>
 </div>
 
 <script>
 const WEEKS = 20;
 const KEY = "studytimer";
+const WEEK_MS = 7 * 24 * 3600 * 1000;
+const DAYS = ["월", "화", "수", "목", "금", "토", "일"]; // 시간표 요일 (0 = 월요일)
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2, "0");
 const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const hms = s => `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+const toMin = t => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const weekday = d => (d.getDay() + 6) % 7;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 // 시작 시각만 저장하고 지금 시각과의 차이로 계산 → 페이지를 닫아도 시간이 흐름
 const S = {
@@ -185,6 +284,9 @@ const S = {
   pomo: null,      // { phase: "focus" | "break", start, end }
   focusMin: 25,
   breakMin: 5,
+  classes: [],     // 고정 시간표 { id, name, day, start, end } — 직접 지우기 전까지 유지
+  todos: [],       // { id, text, done, created, day?, start?, end? } — 만든 지 일주일 뒤 삭제
+  tab: "tt",
 };
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY))); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -192,6 +294,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 let lastDay = keyOf(new Date());
 let alarmOn = false;
 let audio = null;
+let openBlock = null; // 팝업에 띄운 시간표 칸 { kind, id }
 
 // 자정을 넘긴 공부 시간을 날짜별로 나눔
 function splitByDay(start, end) {
@@ -309,12 +412,166 @@ function renderGrass(now) {
   $("grass").innerHTML = cells.join("");
 }
 
+// ---------- 시간표 / ToDo ----------
+
+function pruneTodos() {
+  const before = S.todos.length;
+  S.todos = S.todos.filter(t => Date.now() - t.created < WEEK_MS);
+  if (S.todos.length !== before) save();
+}
+
+function daysLeft(t) {
+  return Math.max(1, Math.ceil((t.created + WEEK_MS - Date.now()) / (24 * 3600 * 1000)));
+}
+
+function renderPlan() {
+  const tt = S.tab === "tt";
+  $("tabTT").classList.toggle("on", tt);
+  $("tabTodo").classList.toggle("on", !tt);
+  $("ttPane").hidden = !tt;
+  $("todoPane").hidden = tt;
+  $("addClass").hidden = !tt;
+  renderTimetable();
+  renderTodos();
+}
+
+function renderTimetable() {
+  const H = 26; // 한 시간 높이(px)
+  const blocks = [
+    ...S.classes.map(c => ({ ...c, kind: "class" })),
+    ...S.todos.filter(t => t.day !== undefined).map(t => ({ ...t, name: t.text, kind: "todo" })),
+  ];
+  // 기본 9시~22시, 그 밖의 일정이 있으면 넓힘
+  let from = 9, to = 22;
+  blocks.forEach(b => { from = Math.min(from, Math.floor(toMin(b.start) / 60)); to = Math.max(to, Math.ceil(toMin(b.end) / 60)); });
+
+  const today = weekday(new Date());
+  let html = `<div class="dayname"></div>`;
+  DAYS.forEach((d, i) => html += `<div class="dayname${i === today ? " is-today" : ""}">${d}</div>`);
+
+  let hours = "";
+  for (let h = from + 1; h < to; h++) hours += `<span style="top:${(h - from) * H}px">${h}</span>`;
+  html += `<div class="hours" style="height:${(to - from) * H}px">${hours}</div>`;
+
+  DAYS.forEach((_, i) => {
+    let col = "";
+    blocks.filter(b => b.day === i).forEach(b => {
+      const top = (toMin(b.start) - from * 60) / 60 * H;
+      const height = Math.max(14, (toMin(b.end) - toMin(b.start)) / 60 * H - 2);
+      const cls = ["blk", b.kind === "todo" ? "todo" : "", b.done ? "done" : ""].join(" ");
+      col += `<button type="button" class="${cls}" style="top:${top}px;height:${height}px" data-kind="${b.kind}" data-id="${b.id}" title="${esc(b.name)} ${b.start}~${b.end}">${esc(b.name)}</button>`;
+    });
+    html += `<div class="col${i === today ? " is-today" : ""}" style="--h:${H}px;height:${(to - from) * H}px">${col}</div>`;
+  });
+  $("tt").innerHTML = html;
+}
+
+function renderTodos() {
+  if (!S.todos.length) {
+    $("todos").innerHTML = `<div class="tt-empty" style="padding:18px 0">아직 할 일이 없어요</div>`;
+    return;
+  }
+  $("todos").innerHTML = [...S.todos].sort((a, b) => a.done - b.done || a.created - b.created).map(t => {
+    const when = t.day !== undefined ? `${DAYS[t.day]} ${t.start}~${t.end} · ` : "";
+    return `<div class="todo${t.done ? " done" : ""}">
+      <input type="checkbox" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="완료">
+      <div class="txt">${esc(t.text)}<span class="meta">${when}${daysLeft(t)}일 뒤 사라져요</span></div>
+      <button type="button" class="x" data-id="${t.id}" aria-label="삭제">×</button>
+    </div>`;
+  }).join("");
+}
+
+function setTab(tab) { S.tab = tab; save(); renderPlan(); }
+$("tabTT").addEventListener("click", () => setTab("tt"));
+$("tabTodo").addEventListener("click", () => setTab("todo"));
+
+const dayOptions = DAYS.map((d, i) => `<option value="${i}">${d}요일</option>`).join("");
+$("classDay").innerHTML = dayOptions;
+$("todoDay").insertAdjacentHTML("beforeend", dayOptions);
+
+$("addClass").addEventListener("click", () => {
+  $("classErr").textContent = "";
+  $("classDay").value = weekday(new Date());
+  $("classModal").hidden = false;
+  $("className").focus();
+});
+$("classCancel").addEventListener("click", () => { $("classModal").hidden = true; });
+$("classForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = $("className").value.trim();
+  const start = $("classStart").value, end = $("classEnd").value;
+  if (!name) return $("classErr").textContent = "이름을 적어 주세요.";
+  if (!start || !end || toMin(end) <= toMin(start)) return $("classErr").textContent = "끝나는 시간이 시작보다 늦어야 해요.";
+  S.classes.push({ id: uid(), name, day: +$("classDay").value, start, end });
+  save();
+  $("className").value = "";
+  $("classModal").hidden = true;
+  renderTimetable();
+});
+
+$("todoDay").addEventListener("change", () => {
+  const off = $("todoDay").value === "";
+  $("todoStart").disabled = $("todoEnd").disabled = off;
+  if (!off && !$("todoStart").value) { $("todoStart").value = "19:00"; $("todoEnd").value = "20:00"; }
+});
+$("todoForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const text = $("todoText").value.trim();
+  if (!text) return;
+  const todo = { id: uid(), text, done: false, created: Date.now() };
+  if ($("todoDay").value !== "") {
+    const start = $("todoStart").value, end = $("todoEnd").value;
+    if (!start || !end || toMin(end) <= toMin(start)) return showNote("ToDo 끝나는 시간이 시작보다 늦어야 해요.");
+    Object.assign(todo, { day: +$("todoDay").value, start, end });
+  }
+  S.todos.push(todo);
+  save();
+  showNote("");
+  $("todoText").value = "";
+  renderPlan();
+});
+$("todos").addEventListener("click", e => {
+  const id = e.target.dataset.id;
+  if (!id) return;
+  if (e.target.type === "checkbox") {
+    const t = S.todos.find(t => t.id === id);
+    t.done = e.target.checked;
+  } else {
+    S.todos = S.todos.filter(t => t.id !== id);
+  }
+  save();
+  renderPlan();
+});
+
+// 시간표 칸을 누르면 정보 + 삭제
+$("tt").addEventListener("click", e => {
+  const b = e.target.closest(".blk");
+  if (!b) return;
+  openBlock = { kind: b.dataset.kind, id: b.dataset.id };
+  const item = openBlock.kind === "class"
+    ? S.classes.find(c => c.id === openBlock.id)
+    : S.todos.find(t => t.id === openBlock.id);
+  $("blockTitle").textContent = item.name || item.text;
+  $("blockText").textContent = `${DAYS[item.day]}요일 ${item.start}~${item.end} · ` +
+    (openBlock.kind === "class" ? "고정 시간표" : `ToDo, ${daysLeft(item)}일 뒤 사라져요`);
+  $("blockModal").hidden = false;
+});
+$("blockClose").addEventListener("click", () => { $("blockModal").hidden = true; });
+$("blockDelete").addEventListener("click", () => {
+  if (openBlock.kind === "class") S.classes = S.classes.filter(c => c.id !== openBlock.id);
+  else S.todos = S.todos.filter(t => t.id !== openBlock.id);
+  save();
+  $("blockModal").hidden = true;
+  renderPlan();
+});
+
+// ---------- 알람 ----------
+
 function showNote(text) {
   $("note").textContent = text;
   $("note").hidden = !text;
 }
 
-// 알람: Windows 알림(우측 하단) + 페이지 팝업 + 소리
 function chime() {
   if (!audio) return;
   [0, 0.35, 0.7].forEach(t => {
@@ -330,11 +587,12 @@ function chime() {
   });
 }
 
+// Windows 알림(우측 하단) + 페이지 팝업 + 소리
 function alarm(title, text) {
   alarmOn = true;
-  $("modalTitle").textContent = title;
-  $("modalText").textContent = text;
-  $("modal").hidden = false;
+  $("alarmTitle").textContent = title;
+  $("alarmText").textContent = text;
+  $("alarmModal").hidden = false;
   chime();
   if ("Notification" in window && Notification.permission === "granted") {
     const n = new Notification(title, { body: text, tag: "studytimer", requireInteraction: true });
@@ -342,9 +600,9 @@ function alarm(title, text) {
   }
 }
 
-$("modalOk").addEventListener("click", () => {
+$("alarmOk").addEventListener("click", () => {
   alarmOn = false;
-  $("modal").hidden = true;
+  $("alarmModal").hidden = true;
   renderClock();
 });
 
@@ -410,7 +668,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) rend
 function tick() {
   checkPomo();
   const k = keyOf(new Date());
-  if (k !== lastDay) { lastDay = k; renderStats(); }
+  if (k !== lastDay) { lastDay = k; pruneTodos(); renderStats(); renderPlan(); }
   else if (running()) renderClock();
 }
 try {
@@ -419,7 +677,9 @@ try {
   setInterval(tick, 1000);
 }
 
+pruneTodos();
 renderStats();
+renderPlan();
 checkPomo();
 </script>
 </body>
