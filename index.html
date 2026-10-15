@@ -76,8 +76,9 @@ select, input[type="text"], input[type="time"] { background: var(--card); border
 .plus { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); font-size: 18px; line-height: 1; color: var(--blue); }
 .plus:hover { background: var(--b1); }
 
-.tt-scroll { overflow: auto; max-height: 300px; border: 1px solid var(--line); border-radius: 14px; }
-.tt { display: grid; grid-template-columns: 34px repeat(7, minmax(44px, 1fr)); min-width: 360px; font-size: 11px; }
+.tt-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.tt { display: grid; grid-template-columns: 30px repeat(7, minmax(38px, 1fr)); min-width: 300px; font-size: 11px; }
+.tp { display: inline-flex; align-items: center; gap: 3px; }
 .tt .dayname { position: sticky; top: 0; z-index: 2; background: var(--card); text-align: center; padding: 6px 0; color: var(--muted); border-bottom: 1px solid var(--line); }
 .tt .dayname.is-today { color: var(--blue); font-weight: 700; }
 .tt .hours { position: relative; color: var(--muted); }
@@ -125,7 +126,7 @@ select, input[type="text"], input[type="time"] { background: var(--card); border
 .modal p { margin: 0; color: var(--muted); }
 .center { text-align: center; align-items: center; }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-.field-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .err { color: #a33a3a; font-size: 12px; min-height: 1em; margin: 0; }
 
@@ -204,9 +205,9 @@ select, input[type="text"], input[type="time"] { background: var(--card); border
             <button class="small-btn" type="submit">추가</button>
             <div class="when">
               <select id="todoDay"><option value="">시간표에 안 넣기</option></select>
-              <input type="time" id="todoStart" step="600" disabled>
+              <span class="tp" id="todoStart"></span>
               ~
-              <input type="time" id="todoEnd" step="600" disabled>
+              <span class="tp" id="todoEnd"></span>
             </div>
           </form>
           <div class="hint" style="text-align:left;margin:8px 0 4px">ToDo는 만든 지 일주일이 지나면 자동으로 사라져요</div>
@@ -239,10 +240,10 @@ select, input[type="text"], input[type="time"] { background: var(--card); border
     <label class="field" for="className">이름
       <input type="text" id="className" placeholder="예: 자료구조" autocomplete="off">
     </label>
+    <label class="field" for="classDay">요일<select id="classDay"></select></label>
     <div class="field-row">
-      <label class="field" for="classDay">요일<select id="classDay"></select></label>
-      <label class="field" for="classStart">시작<input type="time" id="classStart" step="600" value="09:00"></label>
-      <label class="field" for="classEnd">끝<input type="time" id="classEnd" step="600" value="10:30"></label>
+      <div class="field">시작<span class="tp" id="classStart"></span></div>
+      <div class="field">끝<span class="tp" id="classEnd"></span></div>
     </div>
     <p class="err" id="classErr"></p>
     <div class="btns">
@@ -438,7 +439,7 @@ function renderPlan() {
 }
 
 function renderTimetable() {
-  const H = 26; // 한 시간 높이(px)
+  const H = 22; // 한 시간 높이(px) — 스크롤 없이 한 화면에 들어가는 높이
   const blocks = [
     ...S.classes.map(c => ({ ...c, kind: "class" })),
     ...S.todos.filter(t => t.day !== undefined).map(t => ({ ...t, name: t.text, kind: "todo" })),
@@ -487,6 +488,21 @@ function setTab(tab) { S.tab = tab; save(); renderPlan(); }
 $("tabTT").addEventListener("click", () => setTab("tt"));
 $("tabTodo").addEventListener("click", () => setTab("todo"));
 
+// 시간 고르기: 시(0~23) + 분(10분 단위)
+function timePicker(id, hm, disabled) {
+  const [h, m] = hm.split(":");
+  const opts = (list, sel) => list.map(v => `<option${v === sel ? " selected" : ""}>${v}</option>`).join("");
+  const hours = Array.from({ length: 24 }, (_, i) => pad(i));
+  const mins = ["00", "10", "20", "30", "40", "50"];
+  $(id).innerHTML = `<select aria-label="시"${disabled ? " disabled" : ""}>${opts(hours, h)}</select>:` +
+    `<select aria-label="분"${disabled ? " disabled" : ""}>${opts(mins, m)}</select>`;
+}
+const getTime = id => [...$(id).querySelectorAll("select")].map(s => s.value).join(":");
+timePicker("classStart", "09:00");
+timePicker("classEnd", "10:30");
+timePicker("todoStart", "19:00", true);
+timePicker("todoEnd", "20:00", true);
+
 const dayOptions = DAYS.map((d, i) => `<option value="${i}">${d}요일</option>`).join("");
 $("classDay").innerHTML = dayOptions;
 $("todoDay").insertAdjacentHTML("beforeend", dayOptions);
@@ -501,7 +517,7 @@ $("classCancel").addEventListener("click", () => { $("classModal").hidden = true
 $("classForm").addEventListener("submit", e => {
   e.preventDefault();
   const name = $("className").value.trim();
-  const start = $("classStart").value, end = $("classEnd").value;
+  const start = getTime("classStart"), end = getTime("classEnd");
   if (!name) return $("classErr").textContent = "이름을 적어 주세요.";
   if (!start || !end || toMin(end) <= toMin(start)) return $("classErr").textContent = "끝나는 시간이 시작보다 늦어야 해요.";
   S.classes.push({ id: uid(), name, day: +$("classDay").value, start, end });
@@ -513,8 +529,7 @@ $("classForm").addEventListener("submit", e => {
 
 $("todoDay").addEventListener("change", () => {
   const off = $("todoDay").value === "";
-  $("todoStart").disabled = $("todoEnd").disabled = off;
-  if (!off && !$("todoStart").value) { $("todoStart").value = "19:00"; $("todoEnd").value = "20:00"; }
+  document.querySelectorAll("#todoStart select, #todoEnd select").forEach(s => s.disabled = off);
 });
 $("todoForm").addEventListener("submit", e => {
   e.preventDefault();
@@ -522,7 +537,7 @@ $("todoForm").addEventListener("submit", e => {
   if (!text) return;
   const todo = { id: uid(), text, done: false, created: Date.now() };
   if ($("todoDay").value !== "") {
-    const start = $("todoStart").value, end = $("todoEnd").value;
+    const start = getTime("todoStart"), end = getTime("todoEnd");
     if (!start || !end || toMin(end) <= toMin(start)) return showNote("ToDo 끝나는 시간이 시작보다 늦어야 해요.");
     Object.assign(todo, { day: +$("todoDay").value, start, end });
   }
